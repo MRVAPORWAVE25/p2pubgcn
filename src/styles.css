@@ -2,6 +2,14 @@
 @source "../src";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: "Days One";
+  src: url("/__l5e/assets-v1/7299ec5d-d0ce-48a0-b903-9c58322d6a2d/DaysOne-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /*
@@ -140,5 +148,6 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: "Days One", system-ui, sans-serif;
   }
 }
