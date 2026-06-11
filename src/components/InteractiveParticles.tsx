@@ -8,7 +8,7 @@ interface Particle {
   r: number;
 }
 
-export function InteractiveParticles() {
+export function InteractiveParticles({ onReady }: { onReady?: () => void } = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouse = useRef({ x: -9999, y: -9999 });
 
@@ -49,6 +49,7 @@ export function InteractiveParticles() {
     window.addEventListener("mouseleave", onLeave);
     window.addEventListener("resize", resize);
 
+    let firstFrame = true;
     const render = () => {
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
@@ -94,6 +95,10 @@ export function InteractiveParticles() {
       }
 
       raf = requestAnimationFrame(render);
+      if (firstFrame) {
+        firstFrame = false;
+        onReady?.();
+      }
     };
     render();
 
@@ -103,7 +108,7 @@ export function InteractiveParticles() {
       window.removeEventListener("mouseleave", onLeave);
       window.removeEventListener("resize", resize);
     };
-  }, []);
+  }, [onReady]);
 
   return <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0" />;
 }

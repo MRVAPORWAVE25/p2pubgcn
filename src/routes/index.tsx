@@ -35,10 +35,19 @@ type View = "logo" | "where" | "games" | "sites";
 function Index() {
   const [view, setView] = useState<View>("logo");
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black">
-      <InteractiveParticles />
+      <InteractiveParticles onReady={() => setLoading(false)} />
+      {loading && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-12 w-12 rounded-full border-2 border-orange-500/30 border-t-orange-400 animate-spin" />
+            <p className="text-orange-300/80 text-sm tracking-widest">LOADING</p>
+          </div>
+        </div>
+      )}
       <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(251,146,60,0.25)_0%,rgba(0,0,0,0)_70%)] blur-2xl" />
       <main className="relative z-10 flex min-h-screen items-center justify-center px-6">
         {view === "logo" && (
@@ -61,6 +70,12 @@ function Index() {
               <MenuButton onClick={() => setView("games")}>Games</MenuButton>
               <MenuButton onClick={() => setView("sites")}>Sites</MenuButton>
             </div>
+            <button
+              onClick={() => setView("logo")}
+              className="text-orange-300/70 text-sm hover:text-orange-200 underline-offset-4 hover:underline"
+            >
+              ← Back
+            </button>
           </div>
         )}
 
