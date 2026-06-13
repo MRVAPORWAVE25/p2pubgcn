@@ -118,16 +118,20 @@ function Index() {
         )}
       </main>
 
-      {iframeUrl && (
+      {iframeItem && (
         <div className="fixed inset-0 z-50 bg-black animate-fade-in">
           <button
-            onClick={() => setIframeUrl(null)}
+            onClick={() => setIframeItem(null)}
             aria-label="Close"
             className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-orange-500/90 text-black font-bold text-xl flex items-center justify-center hover:bg-orange-400 transition-colors"
           >
             ✕
           </button>
-          <iframe src={iframeUrl} title="content" className="h-full w-full border-0" />
+          {iframeItem.html ? (
+            <iframe srcDoc={iframeItem.html} title="content" className="h-full w-full border-0" />
+          ) : (
+            <iframe src={iframeItem.url} title="content" className="h-full w-full border-0" />
+          )}
         </div>
       )}
     </div>
