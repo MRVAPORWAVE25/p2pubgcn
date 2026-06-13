@@ -111,10 +111,10 @@ function Index() {
         )}
 
         {view === "games" && (
-          <ItemGrid title="Games" items={GAMES} onPick={setIframeUrl} onBack={() => setView("where")} />
+          <ItemGrid title="Games" items={GAMES} onPick={setIframeItem} onBack={() => setView("where")} />
         )}
         {view === "sites" && (
-          <ItemGrid title="Sites" items={SITES} onPick={setIframeUrl} onBack={() => setView("where")} />
+          <ItemGrid title="Sites" items={SITES} onPick={setIframeItem} onBack={() => setView("where")} />
         )}
       </main>
 
