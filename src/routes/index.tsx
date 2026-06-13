@@ -26,7 +26,7 @@ const GAMES: Item[] = [
   { name: "Burrito Bison", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/beegstuf@main/BurritoBison-main/burbis.svg" },
   { name: "Geometry Dash", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/web-dashers.github.io@main/dash.svg" },
   { name: "Tanuki Sunset", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/tanukisunset/tanuki.svg" },
-  { name: "Slope", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/slope/index.html" },
+  { name: "Slope", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/slope/slope.svg" },
   { name: "Snow Rider 3D", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/snowrider3d/sr3d.svg" },
   { name: "Subway Surfers", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/subwaysurfers/ss.svg" },
   { name: "OVO", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/seraph@main/games/ovo/index.html" },
