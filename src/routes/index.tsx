@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Item = { name: string; url: string };
+type Item = { name: string; url?: string; html?: string };
 const GAMES: Item[] = [
   { name: "Death Run 3D", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/delfordraw@main/dr3d.svg" },
   { name: "Bitlife", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/delfordraw@main/bitl.svg" },
@@ -25,9 +25,40 @@ const GAMES: Item[] = [
   { name: "Endacopia", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/beegstuf@main/Endacopia/Endacopia.svg" },
   { name: "Burrito Bison", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/beegstuf@main/BurritoBison-main/burbis.svg" },
   { name: "Geometry Dash", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/web-dashers.github.io@main/dash.svg" },
+  { name: "Tanuki Sunset", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/tanukisunset/tanuki.svg" },
+  { name: "Slope", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/slope/index.html" },
+  { name: "Snow Rider 3D", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/snowrider3d/sr3d.svg" },
+  { name: "Subway Surfers", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/subwaysurfers/ss.svg" },
+  { name: "OVO", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/seraph@main/games/ovo/index.html" },
 ];
 const SITES: Item[] = [
   { name: "Duck Math", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/DuckMath@main/duck.svg" },
+  {
+    name: "gn-math",
+    html: `<script>
+launch();
+function launch() {
+try {
+fetch("https://unpkg.com/gnrunner@latest/dist/index.html?t="+Date.now())
+.then(response => response.text())
+.then(html => {
+document.documentElement.innerHTML = html;
+document.documentElement.querySelectorAll('script').forEach(oldScript => {
+const newScript = document.createElement('script');
+if (oldScript.src) {
+newScript.src = oldScript.src;
+} else {
+newScript.textContent = oldScript.textContent;
+}
+document.body.appendChild(newScript);
+});
+});
+} catch (error) {
+console.error('error:', error);
+}
+}
+</script>`,
+  },
 ];
 
 type View = "logo" | "where" | "games" | "sites";
