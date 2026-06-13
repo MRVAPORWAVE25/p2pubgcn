@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import p2pLogo from "@/assets/p2p-logo.png.asset.json";
 import { InteractiveParticles } from "@/components/InteractiveParticles";
 import { AIChat } from "@/components/AIChat";
