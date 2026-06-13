@@ -157,7 +157,7 @@ function ItemGrid({
 }: {
   title: string;
   items: Item[];
-  onPick: (url: string) => void;
+  onPick: (item: Item) => void;
   onBack: () => void;
 }) {
   return (
@@ -167,7 +167,7 @@ function ItemGrid({
       </h2>
       <div className="flex flex-wrap justify-center gap-3 max-w-3xl">
         {items.map((it) => (
-          <MenuButton key={it.name} onClick={() => onPick(it.url)}>
+          <MenuButton key={it.name} onClick={() => onPick(it)}>
             {it.name}
           </MenuButton>
         ))}
