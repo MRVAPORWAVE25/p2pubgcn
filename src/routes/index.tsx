@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import p2pLogo from "@/assets/p2p-logo.png.asset.json";
 import { InteractiveParticles } from "@/components/InteractiveParticles";
+import { AIChat } from "@/components/AIChat";
+import { PublicChat } from "@/components/PublicChat";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,7 +63,7 @@ console.error('error:', error);
   },
 ];
 
-type View = "logo" | "where" | "games" | "sites";
+type View = "logo" | "where" | "games" | "sites" | "ai" | "chat";
 
 function Index() {
   const [view, setView] = useState<View>("logo");
@@ -97,9 +99,11 @@ function Index() {
             <h1 className="text-5xl md:text-7xl font-bold text-orange-400 [text-shadow:0_0_30px_rgba(251,146,60,0.6)]">
               Where to?
             </h1>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap justify-center gap-4">
               <MenuButton onClick={() => setView("games")}>Games</MenuButton>
               <MenuButton onClick={() => setView("sites")}>Sites</MenuButton>
+              <MenuButton onClick={() => setView("ai")}>AI</MenuButton>
+              <MenuButton onClick={() => setView("chat")}>Chat</MenuButton>
             </div>
             <button
               onClick={() => setView("logo")}
@@ -116,6 +120,8 @@ function Index() {
         {view === "sites" && (
           <ItemGrid title="Sites" items={SITES} onPick={setIframeItem} onBack={() => setView("where")} />
         )}
+        {view === "ai" && <AIChat onBack={() => setView("where")} />}
+        {view === "chat" && <PublicChat onBack={() => setView("where")} />}
       </main>
 
       {iframeItem && (
