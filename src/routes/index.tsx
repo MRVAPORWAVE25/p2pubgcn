@@ -65,7 +65,7 @@ type View = "logo" | "where" | "games" | "sites";
 
 function Index() {
   const [view, setView] = useState<View>("logo");
-  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
+  const [iframeItem, setIframeItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
 
   return (
