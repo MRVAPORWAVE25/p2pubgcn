@@ -29,7 +29,7 @@ const GAMES: Item[] = [
   { name: "Slope", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/slope/slope.svg" },
   { name: "Snow Rider 3D", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/snowrider3d/sr3d.svg" },
   { name: "Subway Surfers", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/Seraph@main/games/subwaysurfers/ss.svg" },
-  { name: "OVO", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/seraph@main/games/ovo/index.html" },
+  { name: "OVO", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/seraph@main/games/ovo/ovo.svg" },
 ];
 const SITES: Item[] = [
   { name: "Duck Math", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/DuckMath@main/duck.svg" },
