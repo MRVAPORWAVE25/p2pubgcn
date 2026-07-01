@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import p2pLogo from "@/assets/p2p-logo.png.asset.json";
 import { InteractiveParticles } from "@/components/InteractiveParticles";
 import { AIChat } from "@/components/AIChat";
 import { PublicChat } from "@/components/PublicChat";
+import { Options } from "@/components/Options";
+import { readCustomSites } from "@/lib/p2d";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,6 +37,7 @@ const GAMES: Item[] = [
 ];
 const SITES: Item[] = [
   { name: "Duck Math", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/DuckMath@main/duck.svg" },
+  { name: "Zodiac", url: "https://cdn.jsdelivr.net/gh/MRVAPORWAVE25/zd-pages@main/svg.svg" },
   {
     name: "gn-math",
     html: `<script>
@@ -63,12 +66,18 @@ console.error('error:', error);
   },
 ];
 
-type View = "logo" | "where" | "games" | "sites" | "ai" | "chat";
+type View = "logo" | "where" | "games" | "sites" | "ai" | "chat" | "options";
 
 function Index() {
   const [view, setView] = useState<View>("logo");
   const [iframeItem, setIframeItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
+  const [customSites, setCustomSites] = useState<Item[]>([]);
+
+  useEffect(() => {
+    if (view === "sites") setCustomSites(readCustomSites());
+  }, [view]);
+  const sitesAll = [...SITES, ...customSites];
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black">
@@ -104,6 +113,7 @@ function Index() {
               <MenuButton onClick={() => setView("sites")}>Sites</MenuButton>
               <MenuButton onClick={() => setView("ai")}>AI</MenuButton>
               <MenuButton onClick={() => setView("chat")}>Chat</MenuButton>
+              <MenuButton onClick={() => setView("options")}>Options</MenuButton>
             </div>
             <button
               onClick={() => setView("logo")}
@@ -118,10 +128,11 @@ function Index() {
           <ItemGrid title="Games" items={GAMES} onPick={setIframeItem} onBack={() => setView("where")} />
         )}
         {view === "sites" && (
-          <ItemGrid title="Sites" items={SITES} onPick={setIframeItem} onBack={() => setView("where")} />
+          <ItemGrid title="Sites" items={sitesAll} onPick={setIframeItem} onBack={() => setView("where")} />
         )}
         {view === "ai" && <AIChat onBack={() => setView("where")} />}
         {view === "chat" && <PublicChat onBack={() => setView("where")} />}
+        {view === "options" && <Options onBack={() => setView("where")} />}
       </main>
 
       {iframeItem && (
