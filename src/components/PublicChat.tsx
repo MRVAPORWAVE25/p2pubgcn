@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import catDurr from "@/assets/cat-durr.png.asset.json";
 import { GiphyPicker } from "./GiphyPicker";
 import { QuoteCard, type QuotePayload } from "./QuoteCard";
+import type { Json } from "@/integrations/supabase/types";
 
 type Msg = {
   id: string;
@@ -14,7 +15,7 @@ type Msg = {
   reply_to: string | null;
   attachment_url: string | null;
   attachment_type: string | null;
-  quote_payload: unknown;
+  quote_payload: Json | null;
 };
 
 const CHANNELS = ["general", "gaming", "commands"] as const;
@@ -78,7 +79,14 @@ export function PublicChat({ onBack }: { onBack: () => void }) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const insertRow = async (row: Partial<Msg> & { content: string }) => {
+  const insertRow = async (row: {
+    content: string;
+    nickname?: string;
+    avatar_url?: string | null;
+    attachment_url?: string | null;
+    attachment_type?: string | null;
+    quote_payload?: Json | null;
+  }) => {
     await supabase.from("chat_messages").insert({
       nickname,
       avatar_url: effectiveAvatar,
@@ -120,11 +128,15 @@ export function PublicChat({ onBack }: { onBack: () => void }) {
       avatar_url: catDurr.url,
       content: "",
       attachment_type: "quote",
-      quote_payload: payload as unknown as Msg["quote_payload"],
+      quote_payload: payload as unknown as Json,
     });
   };
 
-  const send = async (overrides?: Partial<Msg> & { content?: string }) => {
+  const send = async (overrides?: {
+    content?: string;
+    attachment_url?: string | null;
+    attachment_type?: string | null;
+  }) => {
     const content = (overrides?.content ?? input).trim().slice(0, 1000);
     if (!content && !overrides?.attachment_url) return;
     setSending(true);
@@ -132,7 +144,11 @@ export function PublicChat({ onBack }: { onBack: () => void }) {
       if (channel === "commands" && content.toLowerCase().startsWith("!quote")) {
         await runMiaq(content);
       } else {
-        await insertRow({ content, ...overrides });
+        await insertRow({
+          content,
+          attachment_url: overrides?.attachment_url ?? null,
+          attachment_type: overrides?.attachment_type ?? null,
+        });
       }
       setInput("");
       setReplyTo(null);
