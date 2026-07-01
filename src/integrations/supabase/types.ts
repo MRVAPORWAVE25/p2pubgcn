@@ -16,22 +16,72 @@ export type Database = {
     Tables: {
       chat_messages: {
         Row: {
+          attachment_type: string | null
+          attachment_url: string | null
+          avatar_url: string | null
+          channel: string
           content: string
           created_at: string
           id: string
           nickname: string
+          quote_payload: Json | null
+          reply_to: string | null
         }
         Insert: {
+          attachment_type?: string | null
+          attachment_url?: string | null
+          avatar_url?: string | null
+          channel?: string
           content: string
           created_at?: string
           id?: string
           nickname: string
+          quote_payload?: Json | null
+          reply_to?: string | null
         }
         Update: {
+          attachment_type?: string | null
+          attachment_url?: string | null
+          avatar_url?: string | null
+          channel?: string
           content?: string
           created_at?: string
           id?: string
           nickname?: string
+          quote_payload?: Json | null
+          reply_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          custom_sites: Json
+          nickname: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          custom_sites?: Json
+          nickname?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          custom_sites?: Json
+          nickname?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
