@@ -41,6 +41,13 @@ export function Options({ onBack }: { onBack: () => void }) {
     }
   };
 
+  const onAvatarFile = async (f: File) => {
+    if (f.size > 2_000_000) { setMsg("Avatar must be under 2MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => setAvatar(String(reader.result || ""));
+    reader.readAsDataURL(f);
+  };
+
   return (
     <div className="flex flex-col items-center gap-6 animate-fade-in w-full max-w-lg">
       <h2 className="text-4xl md:text-5xl font-bold text-orange-400 [text-shadow:0_0_30px_rgba(251,146,60,0.6)]">
@@ -63,6 +70,11 @@ export function Options({ onBack }: { onBack: () => void }) {
               placeholder="Avatar image URL (blank = cat-durr)"
               className="rounded bg-black/60 border border-orange-500/40 px-3 py-2 text-orange-100"
             />
+            <label className="text-orange-300/80 text-xs cursor-pointer hover:text-orange-200">
+              or upload from computer
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) void onAvatarFile(f); }} />
+            </label>
           </div>
         </div>
         <button onClick={save} className="self-start px-4 py-2 rounded border border-orange-500/60 bg-orange-500/20 text-orange-200">

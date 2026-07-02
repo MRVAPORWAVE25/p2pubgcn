@@ -271,6 +271,11 @@ export function PublicChat({ onBack }: { onBack: () => void }) {
                   {(m.attachment_type === "gif" || m.attachment_type === "image") && m.attachment_url && (
                     <img src={m.attachment_url} alt="" className="mt-1 rounded max-h-80" />
                   )}
+                  {m.attachment_type === "file" && m.attachment_url && (
+                    <a href={m.attachment_url} download className="mt-1 inline-block text-orange-300 underline">
+                      📎 Download attachment
+                    </a>
+                  )}
                   {m.attachment_type === "quote" && m.quote_payload && (
                     <div className="mt-2">
                       <QuoteCard payload={m.quote_payload as QuotePayload} />
