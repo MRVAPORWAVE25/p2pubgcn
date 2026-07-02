@@ -3,6 +3,7 @@ export type P2DFile = {
   nickname?: string;
   avatar?: string;
   customSites?: Array<{ name: string; html: string }>;
+  aiConversations?: unknown;
   exportedAt: string;
 };
 
@@ -10,6 +11,8 @@ const KEYS = {
   nick: "p2p_nick",
   avatar: "p2p_avatar",
   sites: "p2p_custom_sites",
+  ai: "p2p_ai_conversations",
+  aiActive: "p2p_ai_active",
 };
 
 export function readCustomSites(): Array<{ name: string; html: string }> {
@@ -34,6 +37,9 @@ export function exportP2D(): P2DFile {
     nickname: localStorage.getItem(KEYS.nick) ?? undefined,
     avatar: localStorage.getItem(KEYS.avatar) ?? undefined,
     customSites: readCustomSites(),
+    aiConversations: (() => {
+      try { return JSON.parse(localStorage.getItem(KEYS.ai) ?? "null"); } catch { return null; }
+    })(),
     exportedAt: new Date().toISOString(),
   };
 }
@@ -57,6 +63,7 @@ export async function importP2DFile(file: File): Promise<P2DFile> {
   if (data.nickname) localStorage.setItem(KEYS.nick, data.nickname);
   if (data.avatar) localStorage.setItem(KEYS.avatar, data.avatar);
   if (Array.isArray(data.customSites)) writeCustomSites(data.customSites);
+  if (data.aiConversations) localStorage.setItem(KEYS.ai, JSON.stringify(data.aiConversations));
   return data;
 }
 
