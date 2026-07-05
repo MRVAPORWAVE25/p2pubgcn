@@ -17,19 +17,50 @@ export const Route = createFileRoute("/api/chat")({
         const modelMessages = await convertToModelMessages(messages);
         const key = process.env.LOVABLE_API_KEY;
 
-        // Try Lovable AI first if a key exists
+        // Try Lovable AI first if a key exists. Preflight a tiny request so
+        // we can detect credit/rate errors BEFORE we start streaming, and
+        // silently fall back without the chat "shutting down".
         if (key) {
+          let lovableOk = false;
           try {
-            const gateway = createLovableAiGatewayProvider(key);
-            const result = streamText({
-              model: gateway("google/gemini-3-flash-preview"),
-              system: SYSTEM,
-              messages: modelMessages,
-              onError: (e) => console.error("[lovable-ai]", e),
+            const probe = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Lovable-API-Key": key,
+                "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-3-flash-preview",
+                messages: [{ role: "user", content: "ping" }],
+                max_tokens: 1,
+                stream: false,
+              }),
             });
-            return result.toUIMessageStreamResponse();
+            // 402 = out of credits, 429 = rate limited, 5xx = upstream down.
+            // Anything else (including 200) means the gateway is usable.
+            lovableOk = probe.status !== 402 && probe.status !== 429 && probe.status < 500;
+            if (!lovableOk) {
+              console.warn("[lovable-ai] preflight status", probe.status, "— using fallback");
+            }
           } catch (err) {
-            console.error("[lovable-ai] falling back to Pollinations:", err);
+            console.error("[lovable-ai] preflight failed:", err);
+            lovableOk = false;
+          }
+
+          if (lovableOk) {
+            try {
+              const gateway = createLovableAiGatewayProvider(key);
+              const result = streamText({
+                model: gateway("google/gemini-3-flash-preview"),
+                system: SYSTEM,
+                messages: modelMessages,
+                onError: (e) => console.error("[lovable-ai]", e),
+              });
+              return result.toUIMessageStreamResponse();
+            } catch (err) {
+              console.error("[lovable-ai] stream init failed, falling back:", err);
+            }
           }
         }
 
