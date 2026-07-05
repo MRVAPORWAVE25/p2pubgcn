@@ -7,7 +7,7 @@ import { lovable } from "@/integrations/lovable/index";
 export function Options({ onBack }: { onBack: () => void }) {
   const [nickname, setNickname] = useState("");
   const [avatar, setAvatar] = useState("");
-  const [user, setUser] = useState<{ email?: string } | null>(null);
+  const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
@@ -70,11 +70,34 @@ export function Options({ onBack }: { onBack: () => void }) {
               placeholder="Avatar image URL (blank = cat-durr)"
               className="rounded bg-black/60 border border-orange-500/40 px-3 py-2 text-orange-100"
             />
-            <label className="text-orange-300/80 text-xs cursor-pointer hover:text-orange-200">
-              or upload from computer
-              <input type="file" accept="image/*" className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) void onAvatarFile(f); }} />
-            </label>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <label className="text-orange-300/80 cursor-pointer hover:text-orange-200 underline">
+                upload from computer
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) void onAvatarFile(f); }} />
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
+                  const pic = (meta.avatar_url ?? meta.picture) as string | undefined;
+                  if (!user) { setMsg("Sign in with Google below first."); return; }
+                  if (!pic) { setMsg("No Google profile picture found on your account."); return; }
+                  setAvatar(pic);
+                  setMsg("Loaded from Google ✓ (click Save profile)");
+                }}
+                className="text-orange-300/80 hover:text-orange-200 underline"
+              >
+                or use your google profile
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAvatar(""); setMsg("Reset to site default (click Save profile)"); }}
+                className="text-orange-300/80 hover:text-orange-200 underline"
+              >
+                use site default
+              </button>
+            </div>
           </div>
         </div>
         <button onClick={save} className="self-start px-4 py-2 rounded border border-orange-500/60 bg-orange-500/20 text-orange-200">
