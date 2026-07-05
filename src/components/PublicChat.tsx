@@ -39,6 +39,7 @@ export function PublicChat({ onBack }: { onBack: () => void }) {
   const [replyTo, setReplyTo] = useState<Msg | null>(null);
   const [showGiphy, setShowGiphy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const effectiveAvatar = avatarUrl || catDurr.url;
   const msgById = useMemo(() => {
@@ -123,11 +124,13 @@ export function PublicChat({ onBack }: { onBack: () => void }) {
       text = m[2];
     }
     const payload: QuotePayload = { text, author, handle, avatar_url: avatar };
+    const imageUrl = await renderQuoteImage(payload);
     await insertRow({
       nickname: MIAQ_NICK,
       avatar_url: catDurr.url,
       content: "",
-      attachment_type: "quote",
+      attachment_url: imageUrl,
+      attachment_type: "image",
       quote_payload: payload as unknown as Json,
     });
   };
@@ -305,6 +308,50 @@ export function PublicChat({ onBack }: { onBack: () => void }) {
             title="Send a GIF"
           >
             GIF
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3 rounded-lg border border-orange-500/60 bg-orange-500/10 text-orange-200"
+            title="Upload a file"
+          >
+            📎
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.txt,.md,.json,.pdf"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (!f) return;
+              if (f.size > 5 * 1024 * 1024) {
+                alert("Max 5MB");
+                return;
+              }
+              const dataUrl = await new Promise<string>((res, rej) => {
+                const r = new FileReader();
+                r.onload = () => res(r.result as string);
+                r.onerror = rej;
+                r.readAsDataURL(f);
+              });
+              const kind = f.type.startsWith("image/") ? "image" : "file";
+              await send({ content: f.name, attachment_url: dataUrl, attachment_type: kind });
+            }}
+          />
+          <button
+            type="button"
+            onClick={async () => {
+              const url = prompt("Paste image or file URL:");
+              if (!url) return;
+              const isImg = /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(url);
+              await send({ content: "", attachment_url: url, attachment_type: isImg ? "image" : "file" });
+            }}
+            className="px-3 rounded-lg border border-orange-500/60 bg-orange-500/10 text-orange-200"
+            title="Attach from URL"
+          >
+            🔗
           </button>
           <input
             autoFocus
