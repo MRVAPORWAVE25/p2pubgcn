@@ -23,6 +23,71 @@ type Channel = (typeof CHANNELS)[number];
 
 const MIAQ_NICK = "Make it a Quote#6660";
 
+async function urlToDataUrl(url: string): Promise<string> {
+  try {
+    const r = await fetch(url, { mode: "cors" });
+    const b = await r.blob();
+    return await new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result as string);
+      fr.onerror = rej;
+      fr.readAsDataURL(b);
+    });
+  } catch {
+    return url;
+  }
+}
+
+function escXml(s: string) {
+  return s.replace(/[<>&"']/g, (c) =>
+    ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[c]!,
+  );
+}
+
+function wrapText(text: string, maxChars: number): string[] {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let cur = "";
+  for (const w of words) {
+    if ((cur + " " + w).trim().length > maxChars) {
+      if (cur) lines.push(cur);
+      cur = w;
+    } else {
+      cur = (cur + " " + w).trim();
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines.slice(0, 8);
+}
+
+async function renderQuoteImage(payload: QuotePayload): Promise<string> {
+  const avatar = await urlToDataUrl(payload.avatar_url || catDurr.url);
+  const lines = wrapText(payload.text, 32);
+  const fontSize = lines.length > 5 ? 36 : lines.length > 3 ? 44 : 54;
+  const lineHeight = fontSize * 1.15;
+  const totalH = lines.length * lineHeight;
+  const startY = 315 - totalH / 2 + fontSize;
+  const tspans = lines
+    .map((l, i) => `<tspan x="510" y="${startY + i * lineHeight}">${escXml(l)}</tspan>`)
+    .join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<defs>
+<linearGradient id="fade" x1="0" x2="1"><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000"/></linearGradient>
+<clipPath id="c"><rect width="480" height="630"/></clipPath>
+</defs>
+<rect width="1200" height="630" fill="#000"/>
+<g clip-path="url(#c)">
+<image href="${avatar}" x="0" y="0" width="480" height="630" preserveAspectRatio="xMidYMid slice"/>
+<rect width="480" height="630" fill="url(#fade)"/>
+</g>
+<text fill="#fff" font-family="Georgia, serif" font-size="${fontSize}" font-weight="300">${tspans}</text>
+<text x="510" y="${startY + lines.length * lineHeight + 40}" fill="#fff" font-family="Georgia, serif" font-style="italic" font-size="26">- ${escXml(payload.author)}</text>
+<text x="510" y="${startY + lines.length * lineHeight + 72}" fill="#888" font-family="Georgia, serif" font-size="20">${escXml(payload.handle)}</text>
+<text x="1180" y="615" text-anchor="end" fill="#666" font-family="Georgia, serif" font-size="14">Make it a Quote#6660</text>
+</svg>`;
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+
 export function PublicChat({ onBack }: { onBack: () => void }) {
   const [nickname, setNickname] = useState<string>(() =>
     typeof window !== "undefined" ? localStorage.getItem("p2p_nick") ?? "" : "",
