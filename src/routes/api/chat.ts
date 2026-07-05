@@ -17,47 +17,20 @@ export const Route = createFileRoute("/api/chat")({
         const modelMessages = await convertToModelMessages(messages);
         const key = process.env.LOVABLE_API_KEY;
 
-        // Preflight the Lovable AI gateway with a tiny non-streaming request so
-        // we can cleanly fall back to Pollinations when this project's credits
-        // are exhausted (402) or rate limited (429) — the user's own chat
-        // shouldn't hard-fail just because the workspace ran out of credits.
-        let useLovable = false;
+        // Try Lovable AI first if a key exists
         if (key) {
           try {
-            const probe = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Lovable-API-Key": key,
-              },
-              body: JSON.stringify({
-                model: "google/gemini-3-flash-preview",
-                messages: [{ role: "user", content: "hi" }],
-                max_tokens: 1,
-                stream: false,
-              }),
+            const gateway = createLovableAiGatewayProvider(key);
+            const result = streamText({
+              model: gateway("google/gemini-3-flash-preview"),
+              system: SYSTEM,
+              messages: modelMessages,
+              onError: (e) => console.error("[lovable-ai]", e),
             });
-            if (probe.ok) {
-              useLovable = true;
-            } else {
-              console.warn("[lovable-ai] preflight not ok", probe.status, "- falling back");
-            }
-            // Drain body to free the connection.
-            try { await probe.text(); } catch { /* ignore */ }
+            return result.toUIMessageStreamResponse();
           } catch (err) {
-            console.error("[lovable-ai] preflight failed:", err);
+            console.error("[lovable-ai] falling back to Pollinations:", err);
           }
-        }
-
-        if (useLovable && key) {
-          const gateway = createLovableAiGatewayProvider(key);
-          const result = streamText({
-            model: gateway("google/gemini-3-flash-preview"),
-            system: SYSTEM,
-            messages: modelMessages,
-            onError: (e) => console.error("[lovable-ai]", e),
-          });
-          return result.toUIMessageStreamResponse();
         }
 
         // Free, keyless fallback via Pollinations (OpenAI-compatible)

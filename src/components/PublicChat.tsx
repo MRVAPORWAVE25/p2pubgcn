@@ -258,22 +258,6 @@ export function PublicChat({ onBack }: { onBack: () => void }) {
             placeholder="Avatar URL (optional — default cat-durr)"
             className="rounded-lg bg-black/60 border border-orange-500/40 px-3 py-2 text-orange-100"
           />
-          <label className="text-orange-300/80 text-xs cursor-pointer hover:text-orange-200 underline self-start">
-            or upload from computer
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                if (f.size > 2_000_000) { alert("Avatar must be under 2MB"); return; }
-                const r = new FileReader();
-                r.onload = () => setDraftAvatar(String(r.result || ""));
-                r.readAsDataURL(f);
-              }}
-            />
-          </label>
           <button type="submit" className="px-5 py-2 rounded-lg border border-orange-500/60 bg-orange-500/20 text-orange-200">
             Join
           </button>
