@@ -68,12 +68,39 @@ export const Route = createFileRoute("/api/chat")({
         const fallback = createOpenAICompatible({
           name: "pollinations",
           baseURL: "https://text.pollinations.ai/openai",
+          headers: {
+            // Pollinations is free & public; a referrer helps them route traffic.
+            "HTTP-Referer": "https://p2p.lovable.app",
+            "X-Title": "P2P AI",
+          },
         });
+        // Try progressively: strongest free model first, then fall back.
+        // All routes below are free & public on text.pollinations.ai.
+        const FREE_MODELS = ["openai-large", "openai", "mistral", "llama"];
+        let lastErr: unknown = null;
+        for (const m of FREE_MODELS) {
+          try {
+            const result = streamText({
+              model: fallback(m),
+              system: SYSTEM,
+              messages: modelMessages,
+              onError: (e) => {
+                lastErr = e;
+                console.error(`[pollinations:${m}]`, e);
+              },
+            });
+            return result.toUIMessageStreamResponse();
+          } catch (err) {
+            lastErr = err;
+            console.error(`[pollinations:${m}] init failed, trying next`, err);
+          }
+        }
+        // Last resort: return a friendly error stream instead of a 500 so the UI keeps working.
         const result = streamText({
           model: fallback("openai"),
           system: SYSTEM,
           messages: modelMessages,
-          onError: (e) => console.error("[pollinations]", e),
+          onError: (e) => console.error("[pollinations:last-resort]", e, lastErr),
         });
         return result.toUIMessageStreamResponse();
       },
