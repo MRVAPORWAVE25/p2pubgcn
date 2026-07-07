@@ -1,10 +1,112 @@
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { createFileRoute } from "@tanstack/react-router";
-import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import {
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  streamText,
+  type UIMessage,
+} from "ai";
 
 const SYSTEM =
   "You are P2P AI, a helpful assistant inside a games & sites portal. Answer concisely and use markdown. If the user asks you to 'make a website', respond with a single complete HTML document wrapped in a ```html code block so it can be previewed and downloaded.";
+
+// Flatten a UIMessage[] to plain {role, content} for OpenAI-style APIs.
+function toPlainMessages(messages: UIMessage[]) {
+  return messages
+    .map((m) => {
+      const text = m.parts
+        .map((p) => (p.type === "text" ? p.text : ""))
+        .join("");
+      return { role: m.role as "user" | "assistant" | "system", content: text };
+    })
+    .filter((m) => m.content.trim().length > 0);
+}
+
+// Stream from a Pollinations-style OpenAI endpoint and emit UI message stream parts.
+async function streamFromPollinations(
+  model: string,
+  messages: UIMessage[],
+): Promise<Response | null> {
+  const controller = new AbortController();
+  let upstream: Response;
+  try {
+    upstream = await fetch("https://text.pollinations.ai/openai", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Referer: "https://p2p.lovable.app",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "system", content: SYSTEM }, ...toPlainMessages(messages)],
+        stream: true,
+        max_tokens: 4096,
+      }),
+    });
+  } catch (e) {
+    console.error(`[pollinations:${model}] fetch failed`, e);
+    return null;
+  }
+  if (!upstream.ok || !upstream.body) {
+    console.error(`[pollinations:${model}] bad status`, upstream.status);
+    return null;
+  }
+
+  const reader = upstream.body.getReader();
+  const decoder = new TextDecoder();
+  const id = crypto.randomUUID();
+
+  const uiStream = createUIMessageStream({
+    execute: async ({ writer }) => {
+      writer.write({ type: "text-start", id });
+      let buffer = "";
+      let gotAny = false;
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith("data:")) continue;
+            const data = trimmed.slice(5).trim();
+            if (data === "[DONE]") continue;
+            try {
+              const json = JSON.parse(data);
+              const delta = json?.choices?.[0]?.delta?.content ?? json?.choices?.[0]?.message?.content ?? "";
+              if (delta) {
+                writer.write({ type: "text-delta", id, delta });
+                gotAny = true;
+              }
+            } catch {
+              // ignore non-JSON keepalives
+            }
+          }
+        }
+      } catch (e) {
+        console.error(`[pollinations:${model}] stream read error`, e);
+      }
+      if (!gotAny) {
+        writer.write({
+          type: "text-delta",
+          id,
+          delta: "The free fallback model returned no content. Try again in a moment.",
+        });
+      }
+      writer.write({ type: "text-end", id });
+    },
+    onError: (e) => {
+      console.error(`[pollinations:${model}] ui-stream error`, e);
+      return "Fallback error";
+    },
+  });
+
+  return createUIMessageStreamResponse({ stream: uiStream });
+}
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -17,9 +119,6 @@ export const Route = createFileRoute("/api/chat")({
         const modelMessages = await convertToModelMessages(messages);
         const key = process.env.LOVABLE_API_KEY;
 
-        // Try Lovable AI first if a key exists. Preflight a tiny request so
-        // we can detect credit/rate errors BEFORE we start streaming, and
-        // silently fall back without the chat "shutting down".
         if (key) {
           let lovableOk = false;
           try {
@@ -37,8 +136,6 @@ export const Route = createFileRoute("/api/chat")({
                 stream: false,
               }),
             });
-            // 402 = out of credits, 429 = rate limited, 5xx = upstream down.
-            // Anything else (including 200) means the gateway is usable.
             lovableOk = probe.status !== 402 && probe.status !== 429 && probe.status < 500;
             if (!lovableOk) {
               console.warn("[lovable-ai] preflight status", probe.status, "— using fallback");
@@ -64,45 +161,30 @@ export const Route = createFileRoute("/api/chat")({
           }
         }
 
-        // Free, keyless fallback via Pollinations (OpenAI-compatible)
-        const fallback = createOpenAICompatible({
-          name: "pollinations",
-          baseURL: "https://text.pollinations.ai/openai",
-          headers: {
-            // Pollinations is free & public; a referrer helps them route traffic.
-            "HTTP-Referer": "https://p2p.lovable.app",
-            "X-Title": "P2P AI",
+        // Free keyless fallback via Pollinations. We stream raw SSE ourselves and
+        // emit UI message parts so the response format is bulletproof, even when
+        // the upstream misbehaves.
+        const FREE_MODELS = ["openai-large", "openai", "mistral"];
+        for (const m of FREE_MODELS) {
+          const res = await streamFromPollinations(m, messages);
+          if (res) return res;
+        }
+
+        // Absolute last resort — never return a 500; give the UI a readable message.
+        const stream = createUIMessageStream({
+          execute: async ({ writer }) => {
+            const id = crypto.randomUUID();
+            writer.write({ type: "text-start", id });
+            writer.write({
+              type: "text-delta",
+              id,
+              delta:
+                "The AI is temporarily unavailable (both the primary and free fallback failed). Please try again in a moment.",
+            });
+            writer.write({ type: "text-end", id });
           },
         });
-        // Try progressively: strongest free model first, then fall back.
-        // All routes below are free & public on text.pollinations.ai.
-        const FREE_MODELS = ["openai-large", "openai", "mistral", "llama"];
-        let lastErr: unknown = null;
-        for (const m of FREE_MODELS) {
-          try {
-            const result = streamText({
-              model: fallback(m),
-              system: SYSTEM,
-              messages: modelMessages,
-              onError: (e) => {
-                lastErr = e;
-                console.error(`[pollinations:${m}]`, e);
-              },
-            });
-            return result.toUIMessageStreamResponse();
-          } catch (err) {
-            lastErr = err;
-            console.error(`[pollinations:${m}] init failed, trying next`, err);
-          }
-        }
-        // Last resort: return a friendly error stream instead of a 500 so the UI keeps working.
-        const result = streamText({
-          model: fallback("openai"),
-          system: SYSTEM,
-          messages: modelMessages,
-          onError: (e) => console.error("[pollinations:last-resort]", e, lastErr),
-        });
-        return result.toUIMessageStreamResponse();
+        return createUIMessageStreamResponse({ stream });
       },
     },
   },
