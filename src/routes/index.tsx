@@ -5,6 +5,7 @@ import { InteractiveParticles } from "@/components/InteractiveParticles";
 import { AIChat } from "@/components/AIChat";
 import { PublicChat } from "@/components/PublicChat";
 import { Options } from "@/components/Options";
+import { SightHub } from "@/components/SightHub";
 import { readCustomSites } from "@/lib/p2d";
 
 export const Route = createFileRoute("/")({
@@ -67,7 +68,7 @@ console.error('error:', error);
   },
 ];
 
-type View = "logo" | "where" | "games" | "sites" | "ai" | "chat" | "options";
+type View = "logo" | "where" | "games" | "sites" | "ai" | "chat" | "options" | "sighthub";
 
 function Index() {
   const [view, setView] = useState<View>("logo");
@@ -115,6 +116,7 @@ function Index() {
               <MenuButton onClick={() => setView("ai")}>AI</MenuButton>
               <MenuButton onClick={() => setView("chat")}>Chat</MenuButton>
               <MenuButton onClick={() => setView("options")}>Options</MenuButton>
+              <MenuButton onClick={() => setView("sighthub")}>SightHub</MenuButton>
             </div>
             <button
               onClick={() => setView("logo")}
@@ -134,6 +136,7 @@ function Index() {
         {view === "ai" && <AIChat onBack={() => setView("where")} />}
         {view === "chat" && <PublicChat onBack={() => setView("where")} />}
         {view === "options" && <Options onBack={() => setView("where")} />}
+        {view === "sighthub" && <SightHub onBack={() => setView("where")} />}
       </main>
 
       {iframeItem && (
