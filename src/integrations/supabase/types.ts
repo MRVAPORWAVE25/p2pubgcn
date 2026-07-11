@@ -61,6 +61,42 @@ export type Database = {
           },
         ]
       }
+      sight_posts: {
+        Row: {
+          author_avatar: string | null
+          author_name: string
+          created_at: string
+          description: string | null
+          homepage_path: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author_avatar?: string | null
+          author_name: string
+          created_at?: string
+          description?: string | null
+          homepage_path: string
+          id?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author_avatar?: string | null
+          author_name?: string
+          created_at?: string
+          description?: string | null
+          homepage_path?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           avatar_url: string | null

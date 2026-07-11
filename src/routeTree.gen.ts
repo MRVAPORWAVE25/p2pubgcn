@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiPublicSightSitePostIdSplatRouteImport } from './routes/api/public/sight-site.$postId.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,41 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSightSitePostIdSplatRoute =
+  ApiPublicSightSitePostIdSplatRouteImport.update({
+    id: '/api/public/sight-site/$postId/$',
+    path: '/api/public/sight-site/$postId/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/public/sight-site/$postId/$': typeof ApiPublicSightSitePostIdSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/public/sight-site/$postId/$': typeof ApiPublicSightSitePostIdSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/public/sight-site/$postId/$': typeof ApiPublicSightSitePostIdSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/chat'
+  fullPaths: '/' | '/api/chat' | '/api/public/sight-site/$postId/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/chat'
-  id: '__root__' | '/' | '/api/chat'
+  to: '/' | '/api/chat' | '/api/public/sight-site/$postId/$'
+  id: '__root__' | '/' | '/api/chat' | '/api/public/sight-site/$postId/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiPublicSightSitePostIdSplatRoute: typeof ApiPublicSightSitePostIdSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +76,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sight-site/$postId/$': {
+      id: '/api/public/sight-site/$postId/$'
+      path: '/api/public/sight-site/$postId/$'
+      fullPath: '/api/public/sight-site/$postId/$'
+      preLoaderRoute: typeof ApiPublicSightSitePostIdSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiPublicSightSitePostIdSplatRoute: ApiPublicSightSitePostIdSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

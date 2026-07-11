@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Options } from "./Options";
 import catDurr from "@/assets/cat-durr.png.asset.json";
+import { PostsTab } from "./sighthub/PostsTab";
+import { NewPostModal } from "./sighthub/NewPostModal";
 
 type Tab = "posts" | "communities" | "profile" | "settings";
 type Mode = "gate" | "in";
@@ -27,6 +29,8 @@ export function SightHub({ onBack }: { onBack: () => void }) {
   const [tab, setTab] = useState<Tab>("posts");
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [showNewPost, setShowNewPost] = useState(false);
+  const [postsKey, setPostsKey] = useState(0);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -119,7 +123,7 @@ export function SightHub({ onBack }: { onBack: () => void }) {
           {canDo && (
             <button
               title="New post"
-              onClick={() => alert("New post coming in the next slice.")}
+              onClick={() => setShowNewPost(true)}
               className="h-8 w-8 rounded-full border border-orange-500/60 bg-orange-500/20 text-orange-200 text-lg leading-none"
             >
               +
@@ -148,14 +152,14 @@ export function SightHub({ onBack }: { onBack: () => void }) {
       {/* Body */}
       <div className="flex-1 overflow-y-auto">
         {tab === "posts" && (
-          <div className="rounded-lg border border-orange-500/30 bg-black/40 p-6 space-y-3">
-            <h3 className="text-2xl text-orange-300 font-bold">Posts</h3>
-            <p className="text-orange-300/70">
-              Site posts will appear here. Use the + button to publish a site (zip, GitHub repo, or manual files).
-            </p>
-            {!canDo && <GuestBlocked what="make a post or view profiles" />}
-            <p className="text-orange-300/50 text-sm">Feed is empty — post uploads ship in the next slice.</p>
-          </div>
+          <>
+            {!canDo && (
+              <div className="mb-3">
+                <GuestBlocked what="make a post or view profiles" />
+              </div>
+            )}
+            <PostsTab onNewPost={() => setShowNewPost(true)} canPost={canDo} refreshKey={postsKey} />
+          </>
         )}
 
         {tab === "communities" && (
@@ -238,6 +242,16 @@ export function SightHub({ onBack }: { onBack: () => void }) {
           </div>
         )}
       </div>
+
+      {showNewPost && user && (
+        <NewPostModal
+          userId={user.id}
+          authorName={(typeof window !== "undefined" && localStorage.getItem("p2p_nick")) || user.email?.split("@")[0] || "user"}
+          authorAvatar={(typeof window !== "undefined" && localStorage.getItem("p2p_avatar")) || null}
+          onClose={() => setShowNewPost(false)}
+          onPosted={() => setPostsKey((k) => k + 1)}
+        />
+      )}
     </div>
   );
 }
